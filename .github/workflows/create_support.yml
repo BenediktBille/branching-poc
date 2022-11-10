@@ -37,7 +37,7 @@ jobs:
         with:
           script: |
             versionName = "${{steps.get-version-name.outputs.result}}"
-            let newTitle = "Creating Release: " + versionName
+            let newTitle = "Creating support branch for: " + versionName
             await github.rest.issues.update({
               issue_number: context.issue.number,
               owner: context.repo.owner,
@@ -67,6 +67,9 @@ jobs:
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
+
+      - name: Fetch tags
+        run: git fetch --tags
 
       - name: Create branch from tag
         run: git checkout -b support/"${{ needs.extract-inputs.outputs.version_name }}" "${{ needs.extract-inputs.outputs.version_name }}"
