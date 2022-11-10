@@ -1,0 +1,13 @@
+name: Create Release
+description: Create a new release
+title: "--The title will update automatically--"
+labels: [":magic_wand: Create Release"]
+body:
+  - type: input
+    id: version_name
+    attributes:
+      label: Version Name
+      description: The name of your version (e.g. 1.0.0.2)
+      placeholder: 1.0.0.0
+    validations:
+      required: true

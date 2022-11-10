@@ -1,0 +1,68 @@
+name: Start Creating Release
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  extract-inputs:
+    if: "${{ contains(github.event.issue.labels.*.name, ':magic_wand: Create Release') }}"
+    name: Extract Inputs
+    runs-on: ubuntu-latest
+    outputs:
+      version_name: ${{ steps.get-version-name.outputs.result }}
+    steps:
+      - name: Update Issue With Comment
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const body = `:hourglass_flowing_sand: Creating release... [\`View workflow run for details\`](${context.payload.repository.html_url}/actions/runs/${context.runId})`
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body
+            })
+      - name: Get version name
+        uses: actions/github-script@v6
+        id: get-version-name
+        with:
+          script: |
+            bodySplit = context.payload.issue.body.split("\n")
+            let versionName = bodySplit[2].trim()
+            return versionName
+          result-encoding: string
+      - name: Update issue title
+        uses: actions/github-script@v6
+        with:
+          script: |
+            versionName = "${{steps.get-version-name.outputs.result}}"
+            let newTitle = "Creating Release: " + versionName
+            await github.rest.issues.update({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: newTitle
+            });
+
+  validate-input:
+    name: Validate Input
+    needs: extract-inputs
+    if: ${{ success() }}
+    steps:
+      - name: Validate Version Name
+        run: echo ${{ needs.extract-inputs.outputs.version_name }} | grep -q -E ${{ '^\d+\.\d+\.\d+\.d+$' }}
+
+  create-release:
+    name: Create Release
+    needs: [extract-inputs, validate-input]
+    if: ${{ success() }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Create tag
+        run: git tag -a "${{ needs.extract-inputs.outputs.version_name }}" "${GITHUB_SHA}}" -m "Release ${{ needs.extract-inputs.outputs.version_name }}"
+
+      - name: Push tag
+        run: git push origin "${{ needs.extract-inputs.outputs.version_name }}"
