@@ -11,3 +11,15 @@ body:
       placeholder: 1.0.0.0
     validations:
       required: true
+
+  - type: dropdown
+    id: release_flavour
+    attributes:
+      label: Release Flavour
+      description: Select the flavour for the tag (optional)
+      options:
+        - SNAPSHOT
+        - RC
+        - PREVIEW
+    validations:
+      required: false
