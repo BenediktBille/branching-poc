@@ -52,7 +52,7 @@ jobs:
     if: ${{ success() }}
     steps:
       - name: Validate Version Name
-        run: echo ${{ needs.extract-inputs.outputs.version_name }} | grep -q -E ${{ '^\d+\.\d+\.\d+\.d+$' }}
+        run: echo "${{ needs.extract-inputs.outputs.version_name }}" | grep -q -E '^[0-9]{1,}\.[0-9]{1,}\.[0-9]{1,}\.[0-9]{1,}$'
 
   create-release:
     name: Create Release
