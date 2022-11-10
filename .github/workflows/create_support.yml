@@ -1,0 +1,75 @@
+name: Start Creating Support Branch
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  extract-inputs:
+    if: "${{ contains(github.event.issue.labels.*.name, ':magic_wand: Create Support Branch') }}"
+    name: Extract Inputs
+    runs-on: ubuntu-latest
+    outputs:
+      version_name: ${{ steps.get-version-name.outputs.result }}
+    steps:
+      - name: Update Issue With Comment
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const body = `:hourglass_flowing_sand: Creating support branch... [\`View workflow run for details\`](${context.payload.repository.html_url}/actions/runs/${context.runId})`
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body
+            })
+      - name: Get version name
+        uses: actions/github-script@v6
+        id: get-version-name
+        with:
+          script: |
+            bodySplit = context.payload.issue.body.split("\n")
+            let versionName = bodySplit[2].trim()
+            return versionName
+          result-encoding: string
+      - name: Update issue title
+        uses: actions/github-script@v6
+        with:
+          script: |
+            versionName = "${{steps.get-version-name.outputs.result}}"
+            let newTitle = "Creating Release: " + versionName
+            await github.rest.issues.update({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: newTitle
+            });
+
+  validate-input:
+    name: Validate Input
+    runs-on: ubuntu-latest
+    needs: extract-inputs
+    if: ${{ success() }}
+    steps:
+      - name: Validate Version Name
+        run: echo "${{ needs.extract-inputs.outputs.version_name }}" | grep -q -E '^[0-9]{1,}\.[0-9]{1,}\.[0-9]{1,}\.[0-9]{1,}$'
+
+  create-release:
+    name: Create Support Branch
+    runs-on: ubuntu-latest
+    needs: [extract-inputs, validate-input]
+    if: ${{ success() }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Add user and e-mail
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+
+      - name: Create branch from tag
+        run: git checkout -b support/"${{ needs.extract-inputs.outputs.version_name }}" "${{ needs.extract-inputs.outputs.version_name }}"
+
+      - name: Push branch
+        run: git push --set-upstream origin support/"${{ needs.extract-inputs.outputs.version_name }}"
