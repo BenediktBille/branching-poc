@@ -64,7 +64,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Create tag
-        run: git tag -a "${{ needs.extract-inputs.outputs.version_name }}" "${GITHUB_SHA}}" -m "Release ${{ needs.extract-inputs.outputs.version_name }}"
+        run: git tag -a "${{ needs.extract-inputs.outputs.version_name }}" "${GITHUB_SHA}" -m "Release ${{ needs.extract-inputs.outputs.version_name }}"
 
       - name: Push tag
         run: git push origin "${{ needs.extract-inputs.outputs.version_name }}"
